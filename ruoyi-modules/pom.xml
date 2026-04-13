@@ -12,8 +12,8 @@
         <module>ruoyi-system</module>
         <module>ruoyi-gen</module>
         <module>ruoyi-job</module>
-        <module>ruoyi-resource</module>
-        <module>ruoyi-workflow</module>
+        <!--        <module>ruoyi-resource</module>-->
+        <!--        <module>ruoyi-workflow</module>-->
     </modules>
 
     <artifactId>ruoyi-modules</artifactId>
@@ -25,28 +25,28 @@
 
     <dependencies>
         <!-- 自定义负载均衡(多团队开发使用) -->
-<!--        <dependency>-->
-<!--            <groupId>org.dromara</groupId>-->
-<!--            <artifactId>ruoyi-common-loadbalancer</artifactId>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.dromara</groupId>-->
+        <!--            <artifactId>ruoyi-common-loadbalancer</artifactId>-->
+        <!--        </dependency>-->
 
         <!-- ELK 日志收集 -->
-<!--        <dependency>-->
-<!--            <groupId>org.dromara</groupId>-->
-<!--            <artifactId>ruoyi-common-logstash</artifactId>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.dromara</groupId>-->
+        <!--            <artifactId>ruoyi-common-logstash</artifactId>-->
+        <!--        </dependency>-->
 
         <!-- skywalking 日志收集 -->
-<!--        <dependency>-->
-<!--            <groupId>org.dromara</groupId>-->
-<!--            <artifactId>ruoyi-common-skylog</artifactId>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.dromara</groupId>-->
+        <!--            <artifactId>ruoyi-common-skylog</artifactId>-->
+        <!--        </dependency>-->
 
         <!-- prometheus 监控 -->
-<!--        <dependency>-->
-<!--            <groupId>org.dromara</groupId>-->
-<!--            <artifactId>ruoyi-common-prometheus</artifactId>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.dromara</groupId>-->
+        <!--            <artifactId>ruoyi-common-prometheus</artifactId>-->
+        <!--        </dependency>-->
 
     </dependencies>
 

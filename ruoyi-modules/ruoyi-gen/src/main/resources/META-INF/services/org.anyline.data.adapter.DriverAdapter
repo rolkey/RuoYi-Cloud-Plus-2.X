@@ -1,0 +1,2 @@
+org.anyline.data.jdbc.mysql.MySQLAdapter
+org.anyline.data.jdbc.postgresql.PostgresqlAdapter
