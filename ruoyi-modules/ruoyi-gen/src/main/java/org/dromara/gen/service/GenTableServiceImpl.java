@@ -352,7 +352,12 @@ public class GenTableServiceImpl implements IGenTableService {
     public byte[] downloadCode(Long tableId) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ZipOutputStream zip = new ZipOutputStream(outputStream);
-        generatorCode(tableId, zip);
+        try {
+            generatorCode(tableId, zip);
+        } catch (Exception e) {
+            log.error("Failed to initialize Velocity for table: {}", tableId, e);
+            throw e;
+        }
         IoUtil.close(zip);
         return outputStream.toByteArray();
     }
@@ -385,6 +390,7 @@ public class GenTableServiceImpl implements IGenTableService {
                     String path = getGenPath(table, template);
                     FileUtils.writeUtf8String(sw.toString(), path);
                 } catch (Exception e) {
+                    log.error("模板生成错误", e);
                     throw new ServiceException("渲染模板失败，表名：" + table.getTableName());
                 }
             }

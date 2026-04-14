@@ -6,6 +6,7 @@ import cn.hutool.core.io.IoUtil;
 import com.baomidou.lock.annotation.Lock4j;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.core.domain.R;
 import org.dromara.common.idempotent.annotation.RepeatSubmit;
 import org.dromara.common.log.annotation.Log;
@@ -34,6 +35,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/gen")
+@Slf4j
 public class GenController extends BaseController {
 
     private final IGenTableService genTableService;
@@ -90,7 +92,7 @@ public class GenController extends BaseController {
     /**
      * 导入表结构（保存）
      *
-     * @param tables 表名串
+     * @param tables   表名串
      * @param dataName 数据源名称
      */
     @SaCheckPermission("tool:gen:import")
@@ -166,7 +168,12 @@ public class GenController extends BaseController {
     @Log(title = "代码生成", businessType = BusinessType.GENCODE)
     @GetMapping("/genCode/{tableId}")
     public R<Void> genCode(@PathVariable("tableId") Long tableId) {
-        genTableService.generatorCode(tableId);
+        try {
+            genTableService.generatorCode(tableId);
+        } catch (Exception e) {
+            log.error("生成代码失败", e);
+            throw new RuntimeException(e);
+        }
         return R.ok();
     }
 
@@ -194,8 +201,13 @@ public class GenController extends BaseController {
     @GetMapping("/batchGenCode")
     public void batchGenCode(HttpServletResponse response, String tableIdStr) throws IOException {
         String[] tableIds = Convert.toStrArray(tableIdStr);
-        byte[] data = genTableService.downloadCode(tableIds);
-        genCode(response, data);
+        try {
+            byte[] data = genTableService.downloadCode(tableIds);
+            genCode(response, data);
+        } catch (Exception e) {
+            log.error("batchGenCode错误", e);
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -216,7 +228,7 @@ public class GenController extends BaseController {
      */
     @SaCheckPermission("tool:gen:list")
     @GetMapping(value = "/getDataNames")
-    public R<Object> getCurrentDataSourceNameList(){
+    public R<Object> getCurrentDataSourceNameList() {
         return R.ok(DataBaseHelper.getDataSourceNameList());
     }
 }
