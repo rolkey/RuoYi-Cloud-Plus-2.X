@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.handlers.PostInitTableInfoHandler;
 import com.baomidou.mybatisplus.core.incrementer.DefaultIdentifierGenerator;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.InnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
@@ -15,6 +16,7 @@ import org.dromara.common.mybatis.aspect.DataPermissionPointcutAdvisor;
 import org.dromara.common.mybatis.handler.InjectionMetaObjectHandler;
 import org.dromara.common.mybatis.handler.MybatisExceptionHandler;
 import org.dromara.common.mybatis.handler.PlusPostInitTableInfoHandler;
+import org.dromara.common.mybatis.interceptor.PinYinInterceptor;
 import org.dromara.common.mybatis.interceptor.PlusDataPermissionInterceptor;
 import org.dromara.common.mybatis.service.SysDataScopeService;
 import org.mybatis.spring.annotation.MapperScan;
@@ -53,6 +55,8 @@ public class MybatisPlusConfiguration {
         interceptor.addInnerInterceptor(paginationInnerInterceptor());
         // 乐观锁插件
         interceptor.addInnerInterceptor(optimisticLockerInnerInterceptor());
+        // 拼音五笔码拦截器
+        interceptor.addInnerInterceptor(pinYinInterceptor());
         return interceptor;
     }
 
@@ -64,6 +68,13 @@ public class MybatisPlusConfiguration {
     }
 
     /**
+     * 拼音五笔码拦截器
+     */
+    public PinYinInterceptor pinYinInterceptor() {
+        return new PinYinInterceptor();
+    }
+
+    /**
      * 数据权限切面处理器
      */
     @Bean
@@ -71,6 +82,7 @@ public class MybatisPlusConfiguration {
     public DataPermissionPointcutAdvisor dataPermissionPointcutAdvisor() {
         return new DataPermissionPointcutAdvisor();
     }
+
     /**
      * 分页插件，自动识别数据库类型
      */
