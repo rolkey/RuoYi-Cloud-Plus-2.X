@@ -56,7 +56,7 @@ public class MybatisPlusConfiguration {
         // 乐观锁插件
         interceptor.addInnerInterceptor(optimisticLockerInnerInterceptor());
         // 拼音五笔码拦截器
-        interceptor.addInnerInterceptor(pinYinInterceptor());
+//        interceptor.addInnerInterceptor(pinYinInterceptor());
         return interceptor;
     }
 
