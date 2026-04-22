@@ -39,14 +39,4 @@ public class SysDeptTreeVo extends Tree<Long> implements Serializable {
         super.setParentId(parentId);
         return this;
     }
-
-    public SysDeptTreeVo setName(String name) {
-        super.setName(name);
-        return this;
-    }
-
-    public SysDeptTreeVo setWeight(Integer weight) {
-        super.setWeight(weight);
-        return this;
-    }
 }

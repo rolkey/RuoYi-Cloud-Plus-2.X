@@ -9,10 +9,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.dromara.common.core.utils.reflect.ReflectUtils;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -123,26 +120,33 @@ public class TreeBuildUtils extends TreeUtil {
             .filter(pid -> !allIds.contains(pid))
             .collect(Collectors.toSet());
 
-        // 使用流处理，遍历每个顶级 parentId，构建对应树，并合并为一个列表返回
-        return rootParentIds.stream()
-            .flatMap(rootParentId -> {
-                // 先将所有节点转换为Tree节点
-                List<Tree<K>> treeNodes = list.stream()
-                    .map(item -> {
-                        Tree<K> tree = new Tree<>();
-                        return mapper.apply(item, tree);
-                    })
-                    .collect(Collectors.toList());
-                
-                // 使用TreeUtil.build的重载方法，传递TreeNodeConfig和NodeParser
-                // 这里我们需要将Tree节点转换为Map，然后使用TreeUtil.build(Map)方法
-                Map<K, Tree<K>> nodeMap = treeNodes.stream()
-                    .collect(Collectors.toMap(Tree::getId, Function.identity()));
-                
-                return TreeUtil.build(nodeMap, rootParentId).stream();
-            })
+        // 将所有节点转换为Tree节点
+        List<Tree<K>> treeNodes = list.stream()
+            .map(item -> mapper.apply(item, null))
+            .toList();
+
+        // 构建ID到节点的映射
+        Map<K, Tree<K>> nodeMap = treeNodes.stream()
+            .collect(Collectors.toMap(Tree::getId, Function.identity()));
+
+        // 构建树结构
+        for (Tree<K> node : treeNodes) {
+            K parentId = node.getParentId();
+            if (parentId != null && nodeMap.containsKey(parentId)) {
+                Tree<K> parent = nodeMap.get(parentId);
+                if (parent.getChildren() == null) {
+                    parent.setChildren(new ArrayList<>());
+                }
+                parent.getChildren().add(node);
+            }
+        }
+
+        // 收集所有根节点
+        return treeNodes.stream()
+            .filter(node -> node.getParentId() == null || !nodeMap.containsKey(node.getParentId()))
             .collect(Collectors.toList());
     }
+
 
     /**
      * 获取节点列表中所有节点的叶子节点

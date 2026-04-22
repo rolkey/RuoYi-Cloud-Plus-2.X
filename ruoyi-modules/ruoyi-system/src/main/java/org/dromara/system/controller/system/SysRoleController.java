@@ -16,6 +16,7 @@ import org.dromara.system.domain.SysUserRole;
 import org.dromara.system.domain.bo.SysDeptBo;
 import org.dromara.system.domain.bo.SysRoleBo;
 import org.dromara.system.domain.bo.SysUserBo;
+import org.dromara.system.domain.vo.SysDeptTreeVo;
 import org.dromara.system.domain.vo.SysRoleVo;
 import org.dromara.system.domain.vo.SysUserVo;
 import org.dromara.system.service.ISysDeptService;
@@ -241,7 +242,8 @@ public class SysRoleController extends BaseController {
      * @param checkedKeys 选中部门列表
      * @param depts       下拉树结构列表
      */
-    public record DeptTreeSelectVo(List<Long> checkedKeys, List<Tree<Long>> depts) {}
+    public record DeptTreeSelectVo(List<Long> checkedKeys, List<SysDeptTreeVo> depts) {
+    }
 
 }
 

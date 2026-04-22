@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.core.constant.CacheNames;
 import org.dromara.common.core.constant.SystemConstants;
 import org.dromara.common.core.exception.ServiceException;
@@ -46,6 +47,7 @@ import java.util.Map;
  */
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class SysDeptServiceImpl implements ISysDeptService {
 
     private final SysDeptMapper baseMapper;
@@ -84,7 +86,7 @@ public class SysDeptServiceImpl implements ISysDeptService {
      * @return 部门树信息集合
      */
     @Override
-    public List<Tree<Long>> selectDeptTreeList(SysDeptBo bo) {
+    public List<SysDeptTreeVo> selectDeptTreeList(SysDeptBo bo) {
         LambdaQueryWrapper<SysDept> lqw = buildQueryWrapper(bo);
         List<SysDeptVo> depts = baseMapper.selectDeptList(lqw);
         return buildDeptTreeSelect(depts);
@@ -123,7 +125,7 @@ public class SysDeptServiceImpl implements ISysDeptService {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public List<Tree<Long>> buildDeptTreeSelect(List<SysDeptVo> depts) {
+    public List<SysDeptTreeVo> buildDeptTreeSelect(List<SysDeptVo> depts) {
         // Check if the department list is empty, return empty list if true
         if (CollUtil.isEmpty(depts)) {
             return CollUtil.newArrayList();
@@ -142,13 +144,15 @@ public class SysDeptServiceImpl implements ISysDeptService {
                     .setWeight(node.getOrderNum());
                 // Set disabled status based on department status
                 deptTree.setDisabled(SystemConstants.DISABLE.equals(node.getStatus()));
-                // Set standard department ID
                 deptTree.setStandDeptId(node.getStandDeptId());
+                if (node.getStandDeptId() != null) {
+                    log.info("{}\n{}", node, deptTree);
+                }
                 return deptTree;
             }
         );
         // Since the mapper returns SysDeptTreeVo, we can safely cast
-        return  treeList;
+        return (List<SysDeptTreeVo>) (List<?>) treeList;
     }
 
     /**

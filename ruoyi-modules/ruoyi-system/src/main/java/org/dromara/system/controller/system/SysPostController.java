@@ -14,6 +14,7 @@ import org.dromara.common.mybatis.core.page.TableDataInfo;
 import org.dromara.common.web.core.BaseController;
 import org.dromara.system.domain.bo.SysDeptBo;
 import org.dromara.system.domain.bo.SysPostBo;
+import org.dromara.system.domain.vo.SysDeptTreeVo;
 import org.dromara.system.domain.vo.SysPostVo;
 import org.dromara.system.service.ISysDeptService;
 import org.dromara.system.service.ISysPostService;
@@ -143,7 +144,7 @@ public class SysPostController extends BaseController {
      */
     @SaCheckPermission("system:post:list")
     @GetMapping("/deptTree")
-    public R<List<Tree<Long>>> deptTree(SysDeptBo dept) {
+    public R<List<SysDeptTreeVo>> deptTree(SysDeptBo dept) {
         return R.ok(deptService.selectDeptTreeList(dept));
     }
 
