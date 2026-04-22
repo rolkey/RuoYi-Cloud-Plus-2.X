@@ -152,7 +152,17 @@ public class SysDeptServiceImpl implements ISysDeptService {
             }
         );
         // Since the mapper returns SysDeptTreeVo, we can safely cast
+//        showList((List<SysDeptTreeVo>) (List<?>) treeList);
         return (List<SysDeptTreeVo>) (List<?>) treeList;
+    }
+
+    @Override
+    public void showList(List<SysDeptTreeVo> sysDeptTreeVos) {
+        for (SysDeptTreeVo sysDeptTreeVo : sysDeptTreeVos) {
+            log.info("sysDeptTreeVo: {}", sysDeptTreeVo);
+            if (CollUtil.isNotEmpty(sysDeptTreeVo.getChildren()))
+                showList((List<SysDeptTreeVo>) (List<?>) sysDeptTreeVo.getChildren());
+        }
     }
 
     /**

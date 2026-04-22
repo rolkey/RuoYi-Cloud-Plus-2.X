@@ -57,6 +57,8 @@ public interface ISysDeptService {
      */
     List<Long> selectDeptListByRoleId(Long roleId);
 
+    void showList(List<SysDeptTreeVo> sysDeptTreeVos);
+
     /**
      * 根据部门ID查询信息
      *
