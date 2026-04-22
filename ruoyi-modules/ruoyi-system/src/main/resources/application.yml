@@ -11,6 +11,13 @@ spring:
     # 环境配置
     active: @profiles.active@
 
+#  application:
+#    # 应用名称
+#    name: ruoyi-system-rk
+#  profiles:
+#    # 环境配置
+#    active: prod
+
 --- # nacos 配置
 spring:
   cloud:

@@ -44,6 +44,11 @@ public class SysDept extends TenantEntity {
     private String deptName;
 
     /**
+     * 标准科室ID
+     */
+    private String standDeptId;
+
+    /**
      * 部门类别编码
      */
     private String deptCategory;

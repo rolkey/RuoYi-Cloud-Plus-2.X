@@ -4,6 +4,7 @@ import cn.hutool.core.lang.tree.Tree;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
 import org.dromara.system.domain.bo.SysDeptBo;
+import org.dromara.system.domain.vo.SysDeptTreeVo;
 import org.dromara.system.domain.vo.SysDeptVo;
 
 import java.util.List;

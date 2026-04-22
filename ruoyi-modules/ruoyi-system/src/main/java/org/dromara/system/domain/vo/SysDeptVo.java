@@ -54,6 +54,8 @@ public class SysDeptVo implements Serializable {
     @ExcelProperty(value = "部门名称")
     private String deptName;
 
+    private String standDeptId;
+
     /**
      * 部门类别编码
      */

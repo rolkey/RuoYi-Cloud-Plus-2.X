@@ -22,6 +22,7 @@ import org.dromara.system.domain.SysDept;
 import org.dromara.system.domain.SysRole;
 import org.dromara.system.domain.SysUser;
 import org.dromara.system.domain.bo.SysDeptBo;
+import org.dromara.system.domain.vo.SysDeptTreeVo;
 import org.dromara.system.domain.vo.SysDeptVo;
 import org.dromara.system.mapper.SysDeptMapper;
 import org.dromara.system.mapper.SysRoleMapper;
@@ -121,21 +122,33 @@ public class SysDeptServiceImpl implements ISysDeptService {
      * @return 下拉树结构列表
      */
     @Override
+    @SuppressWarnings("unchecked")
     public List<Tree<Long>> buildDeptTreeSelect(List<SysDeptVo> depts) {
+        // Check if the department list is empty, return empty list if true
         if (CollUtil.isEmpty(depts)) {
             return CollUtil.newArrayList();
         }
-        return TreeBuildUtils.buildMultiRoot(
-            depts,
-            SysDeptVo::getDeptId,
-            SysDeptVo::getParentId,
-            (node, treeNode) -> treeNode
-                .setId(node.getDeptId())
-                .setParentId(node.getParentId())
-                .setName(node.getDeptName())
-                .setWeight(node.getOrderNum())
-                .putExtra("disabled", SystemConstants.DISABLE.equals(node.getStatus()))
+        // Build multi-root tree structure using TreeBuildUtils
+        List<Tree<Long>> treeList = TreeBuildUtils.buildMultiRoot(
+            depts,           // Source data - list of departments
+            SysDeptVo::getDeptId,        // Function to extract ID from department
+            SysDeptVo::getParentId,      // Function to extract parent ID from department
+            (node, treeNode) -> {        // Lambda function for mapping and transforming data
+                SysDeptTreeVo deptTree = new SysDeptTreeVo();
+                // Set basic properties from source node to tree node
+                deptTree.setId(node.getDeptId())
+                    .setParentId(node.getParentId())
+                    .setName(node.getDeptName())
+                    .setWeight(node.getOrderNum());
+                // Set disabled status based on department status
+                deptTree.setDisabled(SystemConstants.DISABLE.equals(node.getStatus()));
+                // Set standard department ID
+                deptTree.setStandDeptId(node.getStandDeptId());
+                return deptTree;
+            }
         );
+        // Since the mapper returns SysDeptTreeVo, we can safely cast
+        return  treeList;
     }
 
     /**

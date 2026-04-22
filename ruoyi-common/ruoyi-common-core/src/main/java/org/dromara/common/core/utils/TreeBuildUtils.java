@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import org.dromara.common.core.utils.reflect.ReflectUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -125,13 +126,20 @@ public class TreeBuildUtils extends TreeUtil {
         // 使用流处理，遍历每个顶级 parentId，构建对应树，并合并为一个列表返回
         return rootParentIds.stream()
             .flatMap(rootParentId -> {
+                // 先将所有节点转换为Tree节点
                 List<Tree<K>> treeNodes = list.stream()
                     .map(item -> {
                         Tree<K> tree = new Tree<>();
                         return mapper.apply(item, tree);
                     })
                     .collect(Collectors.toList());
-                return TreeUtil.build(treeNodes, rootParentId).stream();
+                
+                // 使用TreeUtil.build的重载方法，传递TreeNodeConfig和NodeParser
+                // 这里我们需要将Tree节点转换为Map，然后使用TreeUtil.build(Map)方法
+                Map<K, Tree<K>> nodeMap = treeNodes.stream()
+                    .collect(Collectors.toMap(Tree::getId, Function.identity()));
+                
+                return TreeUtil.build(nodeMap, rootParentId).stream();
             })
             .collect(Collectors.toList());
     }
