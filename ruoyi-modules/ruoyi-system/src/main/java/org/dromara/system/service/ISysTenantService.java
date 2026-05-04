@@ -61,6 +61,16 @@ public interface ISysTenantService {
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
 
     /**
+     * 查询租户树
+     */
+    List<SysTenantVo> queryTenantTree();
+
+    /**
+     * 根据父租户ID查询子租户列表
+     */
+    List<SysTenantVo> queryByParentId(Long parentTenantId);
+
+    /**
      * 校验企业名称是否唯一
      */
     boolean checkCompanyNameUnique(SysTenantBo bo);

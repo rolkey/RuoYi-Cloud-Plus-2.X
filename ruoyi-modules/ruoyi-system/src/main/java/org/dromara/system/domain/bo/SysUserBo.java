@@ -104,6 +104,11 @@ public class SysUserBo extends BaseEntity {
     private Long[] deptIds;
 
     /**
+     * 关联租户ID列表
+     */
+    private String[] tenantIds;
+
+    /**
      * 数据权限 当前角色ID
      */
     private Long roleId;

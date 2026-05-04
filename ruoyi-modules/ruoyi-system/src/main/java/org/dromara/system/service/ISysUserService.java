@@ -282,4 +282,12 @@ public interface ISysUserService {
      */
     List<Long> selectUserDeptIds(Long userId);
 
+    /**
+     * 查询用户关联的租户ID列表
+     *
+     * @param userId 用户ID
+     * @return 租户ID列表
+     */
+    List<String> selectUserTenantIds(Long userId);
+
 }

@@ -23,6 +23,7 @@ import org.dromara.system.domain.SysUser;
 import org.dromara.system.domain.SysUserDept;
 import org.dromara.system.domain.SysUserPost;
 import org.dromara.system.domain.SysUserRole;
+import org.dromara.system.domain.SysUserTenant;
 import org.dromara.system.domain.bo.SysUserBo;
 import org.dromara.system.domain.vo.SysPostVo;
 import org.dromara.system.domain.vo.SysRoleVo;
@@ -57,6 +58,7 @@ public class SysUserServiceImpl implements ISysUserService {
     private final SysUserRoleMapper userRoleMapper;
     private final SysUserPostMapper userPostMapper;
     private final SysUserDeptMapper userDeptMapper;
+    private final SysUserTenantMapper userTenantMapper;
 
     @Override
     public TableDataInfo<SysUserVo> selectPageUserList(SysUserBo user, PageQuery pageQuery) {
@@ -321,6 +323,8 @@ public class SysUserServiceImpl implements ISysUserService {
         insertUserRole(user, false);
         // 新增用户与部门关联（跨科室权限）
         insertUserDept(user, false);
+        // 新增用户与租户关联（跨租户权限）
+        insertUserTenant(user, false);
         return rows;
     }
 
@@ -355,6 +359,8 @@ public class SysUserServiceImpl implements ISysUserService {
         insertUserPost(user, true);
         // 新增用户与部门关联（跨科室权限）
         insertUserDept(user, true);
+        // 新增用户与租户关联（跨租户权限）
+        insertUserTenant(user, true);
         SysUser sysUser = MapstructUtils.convert(user, SysUser.class);
         // 防止错误更新后导致的数据误删除
         int flag = baseMapper.updateById(sysUser);
@@ -522,6 +528,44 @@ public class SysUserServiceImpl implements ISysUserService {
     }
 
     /**
+     * 新增用户租户关联
+     *
+     * @param user  用户对象
+     * @param clear 清除已存在的关联数据
+     */
+    private void insertUserTenant(SysUserBo user, boolean clear) {
+        String[] tenantIdArr = user.getTenantIds();
+        if (ArrayUtil.isEmpty(tenantIdArr)) {
+            return;
+        }
+        List<String> tenantIds = Arrays.asList(tenantIdArr);
+
+        // 是否清除旧的用户租户关联
+        if (clear) {
+            userTenantMapper.delete(new LambdaQueryWrapper<SysUserTenant>()
+                .eq(SysUserTenant::getUserId, user.getUserId()));
+        }
+
+        // 构建用户租户关联列表并批量插入
+        List<SysUserTenant> list = StreamUtils.toList(tenantIds,
+            tenantId -> {
+                SysUserTenant ut = new SysUserTenant();
+                ut.setUserId(user.getUserId());
+                ut.setTenantId(tenantId);
+                return ut;
+            });
+        userTenantMapper.insertBatch(list);
+    }
+
+    @Override
+    public List<String> selectUserTenantIds(Long userId) {
+        List<SysUserTenant> list = userTenantMapper.selectList(
+            new LambdaQueryWrapper<SysUserTenant>()
+                .eq(SysUserTenant::getUserId, userId));
+        return StreamUtils.toList(list, SysUserTenant::getTenantId);
+    }
+
+    /**
      * 新增用户角色信息
      *
      * @param userId  用户ID
@@ -581,6 +625,8 @@ public class SysUserServiceImpl implements ISysUserService {
         userPostMapper.delete(new LambdaQueryWrapper<SysUserPost>().eq(SysUserPost::getUserId, userId));
         // 删除用户与部门关联
         userDeptMapper.delete(new LambdaQueryWrapper<SysUserDept>().eq(SysUserDept::getUserId, userId));
+        // 删除用户与租户关联
+        userTenantMapper.delete(new LambdaQueryWrapper<SysUserTenant>().eq(SysUserTenant::getUserId, userId));
         // 防止更新失败导致的数据删除
         int flag = baseMapper.deleteById(userId);
         if (flag < 1) {
@@ -609,6 +655,8 @@ public class SysUserServiceImpl implements ISysUserService {
         userPostMapper.delete(new LambdaQueryWrapper<SysUserPost>().in(SysUserPost::getUserId, ids));
         // 删除用户与部门关联
         userDeptMapper.delete(new LambdaQueryWrapper<SysUserDept>().in(SysUserDept::getUserId, ids));
+        // 删除用户与租户关联
+        userTenantMapper.delete(new LambdaQueryWrapper<SysUserTenant>().in(SysUserTenant::getUserId, ids));
         // 防止更新失败导致的数据删除
         int flag = baseMapper.deleteByIds(ids);
         if (flag < 1) {

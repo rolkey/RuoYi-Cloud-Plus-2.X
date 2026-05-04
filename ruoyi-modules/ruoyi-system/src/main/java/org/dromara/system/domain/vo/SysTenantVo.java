@@ -11,6 +11,7 @@ import org.dromara.system.domain.SysTenant;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -99,10 +100,16 @@ public class SysTenantVo implements Serializable {
     private Date expireTime;
 
     /**
-     * 用户数量（-1不限制）
+     * 用户数量
      */
     @ExcelProperty(value = "用户数量")
     private Long accountCount;
+
+    /**
+     * 父租户ID
+     */
+    @ExcelProperty(value = "父租户ID")
+    private Long parentTenantId;
 
     /**
      * 租户状态（0正常 1停用）
@@ -110,6 +117,11 @@ public class SysTenantVo implements Serializable {
     @ExcelProperty(value = "租户状态", converter = ExcelDictConvert.class)
     @ExcelDictFormat(readConverterExp = "0=正常,1=停用")
     private String status;
+
+    /**
+     * 子租户列表（树结构）
+     */
+    private List<SysTenantVo> children;
 
 
 }

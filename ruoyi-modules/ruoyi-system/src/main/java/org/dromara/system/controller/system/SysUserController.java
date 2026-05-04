@@ -334,4 +334,30 @@ public class SysUserController extends BaseController {
         return R.ok();
     }
 
+    /**
+     * 获取用户关联租户ID列表（跨租户权限）
+     */
+    @SaCheckPermission("system:user:query")
+    @GetMapping("/{userId}/tenants")
+    public R<List<String>> getUserTenants(@PathVariable Long userId) {
+        userService.checkUserDataScope(userId);
+        return R.ok(userService.selectUserTenantIds(userId));
+    }
+
+    /**
+     * 更新用户关联租户（跨租户权限）
+     */
+    @SaCheckPermission("system:user:edit")
+    @Log(title = "用户管理", businessType = BusinessType.UPDATE)
+    @RepeatSubmit()
+    @PutMapping("/{userId}/tenants")
+    public R<Void> updateUserTenants(@PathVariable Long userId, @RequestBody String[] tenantIds) {
+        userService.checkUserAllowed(userId);
+        userService.checkUserDataScope(userId);
+        SysUserBo user = new SysUserBo(userId);
+        user.setTenantIds(tenantIds);
+        userService.updateUser(user);
+        return R.ok();
+    }
+
 }

@@ -70,6 +70,29 @@ public class LoginUser implements Serializable {
     }
 
     /**
+     * 关联租户ID列表（跨租户权限）
+     */
+    private List<String> tenantIds = new ArrayList<>();
+
+    /**
+     * 获取所有可访问的租户ID
+     */
+    public List<String> getAllTenantIds() {
+        List<String> all = new ArrayList<>();
+        if (tenantId != null) {
+            all.add(tenantId);
+        }
+        if (tenantIds != null) {
+            for (String id : tenantIds) {
+                if (!all.contains(id)) {
+                    all.add(id);
+                }
+            }
+        }
+        return all;
+    }
+
+    /**
      * 用户唯一标识
      */
     private String token;

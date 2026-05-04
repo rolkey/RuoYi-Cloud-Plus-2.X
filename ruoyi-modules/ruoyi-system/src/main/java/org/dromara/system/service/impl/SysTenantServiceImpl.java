@@ -51,6 +51,7 @@ public class SysTenantServiceImpl implements ISysTenantService {
     private final SysTenantPackageMapper tenantPackageMapper;
     private final SysUserMapper userMapper;
     private final SysDeptMapper deptMapper;
+    private final SysUserTenantMapper userTenantMapper;
     private final SysRoleMapper roleMapper;
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysRoleDeptMapper roleDeptMapper;
@@ -111,6 +112,7 @@ public class SysTenantServiceImpl implements ISysTenantService {
         lqw.eq(bo.getPackageId() != null, SysTenant::getPackageId, bo.getPackageId());
         lqw.eq(bo.getExpireTime() != null, SysTenant::getExpireTime, bo.getExpireTime());
         lqw.eq(bo.getAccountCount() != null, SysTenant::getAccountCount, bo.getAccountCount());
+        lqw.eq(bo.getParentTenantId() != null, SysTenant::getParentTenantId, bo.getParentTenantId());
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), SysTenant::getStatus, bo.getStatus());
         lqw.orderByAsc(SysTenant::getId);
         return lqw;
@@ -122,6 +124,9 @@ public class SysTenantServiceImpl implements ISysTenantService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean insertByBo(SysTenantBo bo) {
+        // 校验租户层级深度
+        validateTenantHierarchy(bo.getParentTenantId());
+
         SysTenant add = MapstructUtils.convert(bo, SysTenant.class);
 
         // 获取所有租户编号
@@ -281,6 +286,7 @@ public class SysTenantServiceImpl implements ISysTenantService {
         SysTenant tenant = MapstructUtils.convert(bo, SysTenant.class);
         tenant.setTenantId(null);
         tenant.setPackageId(null);
+        tenant.setParentTenantId(null);
         return baseMapper.updateById(tenant) > 0;
     }
 
@@ -321,6 +327,32 @@ public class SysTenantServiceImpl implements ISysTenantService {
             // 做一些业务上的校验,判断是否需要校验
             if (ids.contains(TenantConstants.SUPER_ADMIN_ID)) {
                 throw new ServiceException("超管租户不能删除");
+            }
+            // 查询待删除租户的tenantId列表
+            List<SysTenant> tenants = baseMapper.selectList(
+                new LambdaQueryWrapper<SysTenant>().in(SysTenant::getId, ids));
+            List<String> tenantIds = StreamUtils.toList(tenants, SysTenant::getTenantId);
+            // 检查是否有子租户
+            for (Long id : ids) {
+                boolean existChild = baseMapper.exists(new LambdaQueryWrapper<SysTenant>()
+                    .eq(SysTenant::getParentTenantId, id));
+                if (existChild) {
+                    SysTenant tenant = baseMapper.selectById(id);
+                    throw new ServiceException("租户[" + tenant.getCompanyName() + "]存在子租户，不能删除");
+                }
+            }
+            // 检查是否有用户关联了该租户
+            for (String tenantId : tenantIds) {
+                boolean existInUser = userMapper.exists(new LambdaQueryWrapper<SysUser>()
+                    .eq(SysUser::getTenantId, tenantId));
+                if (existInUser) {
+                    throw new ServiceException("租户" + tenantId + "存在关联用户，不能删除");
+                }
+                boolean existInUserTenant = userTenantMapper.exists(new LambdaQueryWrapper<SysUserTenant>()
+                    .eq(SysUserTenant::getTenantId, tenantId));
+                if (existInUserTenant) {
+                    throw new ServiceException("租户" + tenantId + "存在关联用户，不能删除");
+                }
             }
         }
         return baseMapper.deleteByIds(ids) > 0;
@@ -559,6 +591,57 @@ public class SysTenantServiceImpl implements ISysTenantService {
         });
         for (String tenantId : syncTenantIds) {
             TenantHelper.dynamic(tenantId, () -> CacheUtils.clear(CacheNames.SYS_CONFIG));
+        }
+    }
+
+    /**
+     * 查询租户树
+     */
+    @Override
+    public List<SysTenantVo> queryTenantTree() {
+        List<SysTenantVo> all = baseMapper.selectVoList(
+            new LambdaQueryWrapper<SysTenant>().orderByAsc(SysTenant::getId));
+        // 构建树: 顶级租户(parentTenantId == null)作为根，子租户挂到其下
+        List<SysTenantVo> tree = new ArrayList<>();
+        for (SysTenantVo tenant : all) {
+            if (tenant.getParentTenantId() == null) {
+                tree.add(tenant);
+            }
+        }
+        for (SysTenantVo parent : tree) {
+            List<SysTenantVo> children = new ArrayList<>();
+            for (SysTenantVo tenant : all) {
+                if (parent.getId().equals(tenant.getParentTenantId())) {
+                    children.add(tenant);
+                }
+            }
+            parent.setChildren(children);
+        }
+        return tree;
+    }
+
+    /**
+     * 根据父租户ID查询子租户列表
+     */
+    @Override
+    public List<SysTenantVo> queryByParentId(Long parentTenantId) {
+        return baseMapper.selectVoList(
+            new LambdaQueryWrapper<SysTenant>().eq(SysTenant::getParentTenantId, parentTenantId));
+    }
+
+    /**
+     * 校验租户层级深度（最多两级）
+     */
+    private void validateTenantHierarchy(Long parentTenantId) {
+        if (parentTenantId == null) {
+            return;
+        }
+        SysTenant parent = baseMapper.selectById(parentTenantId);
+        if (parent == null) {
+            throw new ServiceException("父租户不存在");
+        }
+        if (parent.getParentTenantId() != null) {
+            throw new ServiceException("租户层级最多两级，父租户不能是子租户");
         }
     }
 

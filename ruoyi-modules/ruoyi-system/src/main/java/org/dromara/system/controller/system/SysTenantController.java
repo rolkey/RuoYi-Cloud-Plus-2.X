@@ -57,6 +57,16 @@ public class SysTenantController extends BaseController {
     }
 
     /**
+     * 查询租户树
+     */
+    @SaCheckRole(TenantConstants.SUPER_ADMIN_ROLE_KEY)
+    @SaCheckPermission("system:tenant:list")
+    @GetMapping("/tree")
+    public R<List<SysTenantVo>> tree() {
+        return R.ok(tenantService.queryTenantTree());
+    }
+
+    /**
      * 导出租户列表
      */
     @SaCheckRole(TenantConstants.SUPER_ADMIN_ROLE_KEY)

@@ -47,4 +47,9 @@ public class SysUserInfoVo implements Serializable {
      */
     private List<Long> deptIds;
 
+    /**
+     * 关联租户ID列表
+     */
+    private List<String> tenantIds;
+
 }

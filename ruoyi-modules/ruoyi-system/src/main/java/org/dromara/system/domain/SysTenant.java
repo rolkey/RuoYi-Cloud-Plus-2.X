@@ -90,6 +90,11 @@ public class SysTenant extends BaseEntity {
     private Long accountCount;
 
     /**
+     * 父租户ID
+     */
+    private Long parentTenantId;
+
+    /**
      * 租户状态（0正常 1停用）
      */
     private String status;
