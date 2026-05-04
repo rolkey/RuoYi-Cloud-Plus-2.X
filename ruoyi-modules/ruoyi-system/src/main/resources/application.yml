@@ -18,6 +18,8 @@ spring:
 #    # 环境配置
 #    active: prod
 
+
+
 --- # nacos 配置
 spring:
   cloud:
@@ -46,13 +48,13 @@ spring:
   #      discovery:
   #        # 注册组
   #        group: DEFAULT_GROUP
-  #        namespace: dev
+  #        namespace: ${spring.profiles.active}
   #        #        ip: @client.ip@
   #        ip: 192.168.168.1
   #      config:
   #        # 配置组
   #        group: DEFAULT_GROUP
-  #        namespace: dev
+  #        namespace: ${spring.profiles.active}
 
   config:
     import:

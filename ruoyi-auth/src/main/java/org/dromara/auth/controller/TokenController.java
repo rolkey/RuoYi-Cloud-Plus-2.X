@@ -69,6 +69,7 @@ public class TokenController {
     @DubboReference
     private final RemoteTenantService remoteTenantService;
     @DubboReference
+//    @DubboReference(group = "prod")
     private final RemoteClientService remoteClientService;
     @DubboReference
     private final RemoteSocialService remoteSocialService;
@@ -99,7 +100,7 @@ public class TokenController {
             return R.fail(MessageUtils.message("auth.grant.type.blocked"));
         }
         // 校验租户
-        sysLoginService.checkTenant(loginBody.getTenantId());
+//        sysLoginService.checkTenant(loginBody.getTenantId());
         // 登录
         LoginVo loginVo = IAuthStrategy.login(body, clientVo, grantType);
 

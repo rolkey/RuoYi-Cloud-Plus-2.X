@@ -1,6 +1,6 @@
 # Tomcat
 server:
-  port: 9210
+  port: 9220
 
 # Spring
 spring:
@@ -11,9 +11,17 @@ spring:
     # 环境配置
     active: @profiles.active@
 
+#  application:
+#    # 应用名称
+#    name: ruoyi-auth-rk
+#  profiles:
+#    # 环境配置
+#    active: prod
+
 --- # nacos 配置
 spring:
   cloud:
+    # 打包环境
     nacos:
       # nacos 服务地址
       server-addr: @nacos.server@
@@ -23,11 +31,31 @@ spring:
         # 注册组
         group: @nacos.discovery.group@
         namespace: ${spring.profiles.active}
+        #        ip: @client.ip@
       config:
         # 配置组
         group: @nacos.config.group@
         namespace: ${spring.profiles.active}
+
+    # 开发环境
+  #    nacos:
+  #      # nacos 服务地址
+  #      server-addr: 192.168.168.128:8848
+  #      username: nacos
+  #      password: nacos
+  #      discovery:
+  #        # 注册组
+  #        group: DEFAULT_GROUP
+  #        namespace: ${spring.profiles.active}
+  #        #        ip: @client.ip@
+  #        ip: 192.168.168.1
+  #      config:
+  #        # 配置组
+  #        group: DEFAULT_GROUP
+  #        namespace: ${spring.profiles.active}
+
   config:
     import:
       - optional:nacos:application-common.yml
+      - optional:nacos:datasource.yml
       - optional:nacos:${spring.application.name}.yml

@@ -16,6 +16,7 @@ import org.dromara.common.log.annotation.Log;
 import org.dromara.common.log.enums.BusinessType;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
+import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.common.tenant.helper.TenantHelper;
 import org.dromara.system.domain.bo.SysTenantBo;
 import org.dromara.system.domain.vo.SysTenantVo;
@@ -57,13 +58,27 @@ public class SysTenantController extends BaseController {
     }
 
     /**
-     * 查询租户树
+     * 查询所有医院树（超级管理员用）
      */
     @SaCheckRole(TenantConstants.SUPER_ADMIN_ROLE_KEY)
     @SaCheckPermission("system:tenant:list")
+    @GetMapping("/treeAll")
+    public R<List<SysTenantVo>> treeAll() {
+        return R.ok(tenantService.queryTenantTree());
+    }
+
+    /**
+     * 查询当前用户所在医院的下级医院列表
+     */
+    @SaCheckPermission("system:tenant:list")
     @GetMapping("/tree")
     public R<List<SysTenantVo>> tree() {
-        return R.ok(tenantService.queryTenantTree());
+        String tenantId = LoginHelper.getTenantId();
+        SysTenantVo currentTenant = tenantService.queryByTenantId(tenantId);
+        if (currentTenant == null) {
+            return R.ok(List.of());
+        }
+        return R.ok(tenantService.queryListByParent(currentTenant.getId()));
     }
 
     /**

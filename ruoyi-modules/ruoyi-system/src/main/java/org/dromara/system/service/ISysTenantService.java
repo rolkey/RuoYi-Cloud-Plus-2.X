@@ -71,6 +71,11 @@ public interface ISysTenantService {
     List<SysTenantVo> queryByParentId(Long parentTenantId);
 
     /**
+     * 根据父租户ID查询子租户列表（无树结构，简化版，用于tree接口）
+     */
+    List<SysTenantVo> queryListByParent(Long parentTenantId);
+
+    /**
      * 校验企业名称是否唯一
      */
     boolean checkCompanyNameUnique(SysTenantBo bo);

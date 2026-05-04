@@ -630,6 +630,17 @@ public class SysTenantServiceImpl implements ISysTenantService {
     }
 
     /**
+     * 根据父租户ID查询子租户列表（简化版，无树结构，用于tree接口）
+     */
+    @Override
+    public List<SysTenantVo> queryListByParent(Long parentTenantId) {
+        return baseMapper.selectVoList(
+            new LambdaQueryWrapper<SysTenant>()
+                .eq(SysTenant::getParentTenantId, parentTenantId)
+                .orderByAsc(SysTenant::getId));
+    }
+
+    /**
      * 校验租户层级深度（最多两级）
      */
     private void validateTenantHierarchy(Long parentTenantId) {

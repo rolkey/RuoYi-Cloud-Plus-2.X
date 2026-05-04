@@ -145,6 +145,7 @@ public class SysUserController extends BaseController {
                 userInfoVo.setPostIds(postService.selectPostListByUserId(userId));
             }
             userInfoVo.setDeptIds(userService.selectUserDeptIds(userId));
+            userInfoVo.setTenantIds(userService.selectUserTenantIds(userId));
         }
         SysRoleBo roleBo = new SysRoleBo();
         roleBo.setStatus(SystemConstants.NORMAL);
