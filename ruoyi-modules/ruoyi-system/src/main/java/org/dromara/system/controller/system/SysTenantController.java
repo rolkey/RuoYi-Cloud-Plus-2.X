@@ -28,6 +28,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -76,7 +77,7 @@ public class SysTenantController extends BaseController {
     @SaCheckPermission("system:tenant:query")
     @GetMapping("/{id}")
     public R<SysTenantVo> getInfo(@NotNull(message = "主键不能为空")
-                                     @PathVariable Long id) {
+                                  @PathVariable Long id) {
         return R.ok(tenantService.queryById(id));
     }
 
@@ -141,11 +142,10 @@ public class SysTenantController extends BaseController {
     }
 
     /**
-     * 动态切换租户
+     * 动态切换租户（所有登录用户可用，由前端控制 UI 可见性）
      *
      * @param tenantId 租户ID
      */
-    @SaCheckRole(TenantConstants.SUPER_ADMIN_ROLE_KEY)
     @GetMapping("/dynamic/{tenantId}")
     public R<Void> dynamicTenant(@NotBlank(message = "租户ID不能为空") @PathVariable String tenantId) {
         TenantHelper.setDynamic(tenantId, true);
@@ -155,7 +155,6 @@ public class SysTenantController extends BaseController {
     /**
      * 清除动态租户
      */
-    @SaCheckRole(TenantConstants.SUPER_ADMIN_ROLE_KEY)
     @GetMapping("/dynamic/clear")
     public R<Void> dynamicClear() {
         TenantHelper.clearDynamic();
@@ -169,7 +168,7 @@ public class SysTenantController extends BaseController {
      * @param tenantId  租户id
      * @param packageId 套餐id
      */
-    @SaCheckRole(TenantConstants.SUPER_ADMIN_ROLE_KEY)
+//    @SaCheckRole(TenantConstants.SUPER_ADMIN_ROLE_KEY)
     @SaCheckPermission("system:tenant:edit")
     @Log(title = "租户管理", businessType = BusinessType.UPDATE)
     @Lock4j
@@ -182,7 +181,7 @@ public class SysTenantController extends BaseController {
     /**
      * 同步租户字典
      */
-    @SaCheckRole(TenantConstants.SUPER_ADMIN_ROLE_KEY)
+//    @SaCheckRole(TenantConstants.SUPER_ADMIN_ROLE_KEY)
     @Log(title = "租户管理", businessType = BusinessType.INSERT)
     @Lock4j
     @GetMapping("/syncTenantDict")
@@ -197,7 +196,7 @@ public class SysTenantController extends BaseController {
     /**
      * 同步租户参数配置
      */
-    @SaCheckRole(TenantConstants.SUPER_ADMIN_ROLE_KEY)
+//    @SaCheckRole(TenantConstants.SUPER_ADMIN_ROLE_KEY)
     @Log(title = "租户管理", businessType = BusinessType.INSERT)
     @Lock4j
     @GetMapping("/syncTenantConfig")

@@ -69,7 +69,20 @@ public class RemoteUserServiceImpl implements RemoteUserService {
      */
     @Override
     public LoginUser getUserInfo(String username, String tenantId) throws UserException {
-        return TenantHelper.dynamic(tenantId, () -> {
+        // 如果未指定租户，用用户名直接查（忽略租户过滤），然后使用用户所属的租户
+        if (StringUtils.isBlank(tenantId)) {
+            SysUserVo sysUser = TenantHelper.ignore(() ->
+                userMapper.selectVoOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUserName, username)));
+            if (ObjectUtil.isNull(sysUser)) {
+                throw new UserException("user.not.exists", username);
+            }
+            if (UserStatus.DISABLE.getCode().equals(sysUser.getStatus())) {
+                throw new UserException("user.blocked", username);
+            }
+            tenantId = sysUser.getTenantId();
+        }
+        String finalTenantId = tenantId;
+        return TenantHelper.dynamic(finalTenantId, () -> {
             SysUserVo sysUser = userMapper.selectVoOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUserName, username));
             if (ObjectUtil.isNull(sysUser)) {
                 throw new UserException("user.not.exists", username);
@@ -77,8 +90,6 @@ public class RemoteUserServiceImpl implements RemoteUserService {
             if (UserStatus.DISABLE.getCode().equals(sysUser.getStatus())) {
                 throw new UserException("user.blocked", username);
             }
-            // 框架登录不限制从什么表查询 只要最终构建出 LoginUser 即可
-            // 此处可根据登录用户的数据不同 自行创建 loginUser 属性不够用继承扩展就行了
             return buildLoginUser(sysUser);
         });
     }
