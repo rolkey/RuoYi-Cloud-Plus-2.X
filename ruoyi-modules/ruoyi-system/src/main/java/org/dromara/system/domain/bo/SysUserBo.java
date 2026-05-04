@@ -99,6 +99,11 @@ public class SysUserBo extends BaseEntity {
     private Long[] postIds;
 
     /**
+     * 关联科室组（跨科室权限）
+     */
+    private Long[] deptIds;
+
+    /**
      * 数据权限 当前角色ID
      */
     private Long roleId;

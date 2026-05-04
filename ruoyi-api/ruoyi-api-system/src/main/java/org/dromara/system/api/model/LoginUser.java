@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -44,6 +45,29 @@ public class LoginUser implements Serializable {
      * 部门名
      */
     private String deptName;
+
+    /**
+     * 关联部门ID列表（跨科室权限）
+     */
+    private List<Long> deptIds = new ArrayList<>();
+
+    /**
+     * 获取所有可访问的部门ID（主属部门 + 关联部门）
+     */
+    public List<Long> getAllDeptIds() {
+        List<Long> all = new ArrayList<>();
+        if (deptId != null) {
+            all.add(deptId);
+        }
+        if (deptIds != null) {
+            for (Long id : deptIds) {
+                if (!all.contains(id)) {
+                    all.add(id);
+                }
+            }
+        }
+        return all;
+    }
 
     /**
      * 用户唯一标识

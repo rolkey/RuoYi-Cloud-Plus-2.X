@@ -1,35 +1,25 @@
 package org.dromara.common.mybatis.interceptor;
 
 import com.baomidou.mybatisplus.extension.plugins.inner.InnerInterceptor;
-import net.sourceforge.pinyin4j.PinyinHelper;
-import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
-import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
-import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
-import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType;
-import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 import org.apache.ibatis.executor.statement.StatementHandler;
-import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.BoundSql;
+import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
+import org.dromara.common.core.utils.PinyinUtils;
+import org.dromara.common.mybatis.annotation.PinyinEncoder;
+import org.dromara.common.mybatis.annotation.WubiEncoder;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PinYinInterceptor implements InnerInterceptor {
 
-    private static final HanyuPinyinOutputFormat DEFAULT_FORMAT = createFormat();
-    private static final char[] WB_CODE = "ggyyyykkkk".toCharArray();
-
-    private static HanyuPinyinOutputFormat createFormat() {
-        HanyuPinyinOutputFormat format = new HanyuPinyinOutputFormat();
-        format.setCaseType(HanyuPinyinCaseType.LOWERCASE);
-        format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
-        format.setVCharType(HanyuPinyinVCharType.WITH_V);
-        return format;
-    }
+    private static final Map<Class<?>, EncoderConfig> CACHE = new ConcurrentHashMap<>();
 
     @Override
     public void beforePrepare(StatementHandler sh, Connection cn, Integer transactionTimeout) {
@@ -46,25 +36,27 @@ public class PinYinInterceptor implements InnerInterceptor {
     }
 
     private void handleEntity(Object entity) {
-        Set<String> fieldsToCheck = getFieldsToCheck(entity.getClass());
-        if (fieldsToCheck.isEmpty()) {
+        EncoderConfig config = getEncoderConfig(entity.getClass());
+        if (config == null || config.isEmpty()) {
             return;
         }
-        String[] sourceFields = {"name", "title", "nickName", "realName"};
-        for (String fieldName : fieldsToCheck) {
+        for (EncoderField ef : config.fields) {
             try {
-                Field field = findField(entity.getClass(), fieldName);
-                if (field != null) {
-                    field.setAccessible(true);
-                    Object value = field.get(entity);
-                    if (value instanceof String str && str.isEmpty()) {
-                        String sourceValue = getSourceFieldValue(entity, sourceFields);
-                        if (sourceValue != null && !sourceValue.isEmpty()) {
-                            if ("spellCode".equals(fieldName)) {
-                                field.set(entity, getPinYinCode(sourceValue));
-                            } else if ("strokeCode".equals(fieldName)) {
-                                field.set(entity, getWubiCode(sourceValue));
-                            }
+                Field targetField = findField(entity.getClass(), ef.target);
+                Field sourceField = findField(entity.getClass(), ef.source);
+                if (targetField == null || sourceField == null) {
+                    continue;
+                }
+                targetField.setAccessible(true);
+                sourceField.setAccessible(true);
+                Object targetValue = targetField.get(entity);
+                if (targetValue instanceof String str && str.isEmpty()) {
+                    Object sourceValue = sourceField.get(entity);
+                    if (sourceValue instanceof String source && !source.isEmpty()) {
+                        if (ef.type == EncoderType.PINYIN) {
+                            targetField.set(entity, PinyinUtils.getPinYinCode(source));
+                        } else if (ef.type == EncoderType.WUBI) {
+                            targetField.set(entity, PinyinUtils.getWubiCode(source));
                         }
                     }
                 }
@@ -73,32 +65,22 @@ public class PinYinInterceptor implements InnerInterceptor {
         }
     }
 
-    private String getSourceFieldValue(Object entity, String[] sourceFields) {
-        for (String fieldName : sourceFields) {
-            try {
-                Field field = findField(entity.getClass(), fieldName);
-                if (field != null) {
-                    field.setAccessible(true);
-                    Object value = field.get(entity);
-                    if (value instanceof String str && !str.isEmpty()) {
-                        return str;
-                    }
-                }
-            } catch (Exception ignored) {
+    private EncoderConfig getEncoderConfig(Class<?> clazz) {
+        return CACHE.computeIfAbsent(clazz, k -> {
+            PinyinEncoder pinyin = clazz.getAnnotation(PinyinEncoder.class);
+            WubiEncoder wubi = clazz.getAnnotation(WubiEncoder.class);
+            if (pinyin == null && wubi == null) {
+                return null;
             }
-        }
-        return null;
-    }
-
-    private Set<String> getFieldsToCheck(Class<?> clazz) {
-        Set<String> fields = new HashSet<>();
-        for (Field f : clazz.getDeclaredFields()) {
-            String name = f.getName();
-            if ("spellCode".equals(name) || "strokeCode".equals(name)) {
-                fields.add(name);
+            EncoderConfig config = new EncoderConfig();
+            if (pinyin != null) {
+                config.fields.add(new EncoderField(EncoderType.PINYIN, pinyin.target(), pinyin.source()));
             }
-        }
-        return fields;
+            if (wubi != null) {
+                config.fields.add(new EncoderField(EncoderType.WUBI, wubi.target(), wubi.source()));
+            }
+            return config;
+        });
     }
 
     private Field findField(Class<?> clazz, String fieldName) {
@@ -113,41 +95,27 @@ public class PinYinInterceptor implements InnerInterceptor {
         }
     }
 
-    private String getPinYinCode(String Chinese) throws BadHanyuPinyinOutputFormatCombination {
-        if (Chinese == null || Chinese.isEmpty()) {
-            return null;
-        }
-        StringBuilder sb = new StringBuilder();
-        for (char c : Chinese.toCharArray()) {
-            String[] pinyins = PinyinHelper.toHanyuPinyinStringArray(c, DEFAULT_FORMAT);
-            if (pinyins != null && pinyins.length > 0) {
-                sb.append(pinyins[0].charAt(0));
-            } else {
-                sb.append(c);
-            }
-        }
-        return sb.toString();
+    private enum EncoderType {
+        PINYIN, WUBI
     }
 
-    private String getWubiCode(String Chinese) {
-        if (Chinese == null || Chinese.isEmpty()) {
-            return null;
+    private static class EncoderField {
+        final EncoderType type;
+        final String target;
+        final String source;
+
+        EncoderField(EncoderType type, String target, String source) {
+            this.type = type;
+            this.target = target;
+            this.source = source;
         }
-        StringBuilder sb = new StringBuilder();
-        for (char c : Chinese.toCharArray()) {
-            if (c < 0x4E00 || c > 0x9FA5) {
-                sb.append(c);
-            } else {
-                int row = (c - 0x4E00) / 94;
-                int col = (c - 0x4E00) % 94;
-                int code = (row / 10) * 10 + (col / 10);
-                if (code < 25) {
-                    sb.append(WB_CODE[code]);
-                } else {
-                    sb.append((char) ('a' + code - 25));
-                }
-            }
+    }
+
+    private static class EncoderConfig {
+        final List<EncoderField> fields = new ArrayList<>();
+
+        boolean isEmpty() {
+            return fields.isEmpty();
         }
-        return sb.toString();
     }
 }

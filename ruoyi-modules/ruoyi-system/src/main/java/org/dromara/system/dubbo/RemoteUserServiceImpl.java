@@ -281,6 +281,7 @@ public class RemoteUserServiceImpl implements RemoteUserService {
         List<SysPostVo> posts = postService.selectPostsByUserId(userId);
         loginUser.setRoles(BeanUtil.copyToList(roles, RoleDTO.class));
         loginUser.setPosts(BeanUtil.copyToList(posts, PostDTO.class));
+        loginUser.setDeptIds(userService.selectUserDeptIds(userId));
         return loginUser;
     }
 

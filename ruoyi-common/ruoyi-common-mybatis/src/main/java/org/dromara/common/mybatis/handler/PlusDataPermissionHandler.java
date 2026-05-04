@@ -13,6 +13,7 @@ import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.utils.SpringUtils;
 import org.dromara.common.core.utils.StreamUtils;
 import org.dromara.common.core.utils.StringUtils;
+import org.dromara.common.mybatis.service.SysDataScopeService;
 import org.dromara.common.mybatis.annotation.DataColumn;
 import org.dromara.common.mybatis.annotation.DataPermission;
 import org.dromara.common.mybatis.enums.DataScopeType;
@@ -28,6 +29,7 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 数据权限过滤
@@ -51,8 +53,8 @@ public class PlusDataPermissionHandler {
     /**
      * 获取数据过滤条件的 SQL 片段
      *
-     * @param where             原始的查询条件表达式
-     * @param isSelect          是否为查询语句
+     * @param where    原始的查询条件表达式
+     * @param isSelect 是否为查询语句
      * @return 数据过滤条件的 SQL 片段
      */
     public Expression getSqlSegment(Expression where, boolean isSelect) {
@@ -163,6 +165,8 @@ public class PlusDataPermissionHandler {
                 String sql = DataPermissionHelper.ignore(() ->
                     parser.parseExpression(type.getSqlTemplate(), parserContext).getValue(context, String.class)
                 );
+                // 如果用户有多个可访问科室，扩展数据权限条件
+                sql = expandDeptCondition(sql, type, user);
                 // 解析sql模板并填充
                 conditions.add(joinStr + sql);
                 isSuccess = true;
@@ -216,6 +220,29 @@ public class PlusDataPermissionHandler {
             return obj;
         }
 
+    }
+
+    /**
+     * 扩展数据权限中的部门条件，将仅包含主属部门的条件扩展为包含所有可访问科室
+     * 例如：dept_id = 100  → dept_id IN (100, 200, 300)
+     * dept_id IN (100) → dept_id IN (100, 200, 300)
+     */
+    private String expandDeptCondition(String sql, DataScopeType type, LoginUser user) {
+        if (user == null || user.getDeptIds() == null || user.getDeptIds().isEmpty()) {
+            return sql;
+        }
+        List<Long> allDeptIds = user.getAllDeptIds();
+        if (allDeptIds.size() <= 1) {
+            return sql;
+        }
+        String deptIdListStr = allDeptIds.stream()
+            .map(String::valueOf)
+            .collect(Collectors.joining(", "));
+        // 处理 DEPT 类型: dept_id = 100  → dept_id IN (100, 200, 300)
+        if (type == DataScopeType.DEPT && sql.matches(".*= \\d+\\s*$")) {
+            sql = sql.replaceAll("= \\d+\\s*$", "IN (" + deptIdListStr + ")");
+        }
+        return sql;
     }
 
     /**

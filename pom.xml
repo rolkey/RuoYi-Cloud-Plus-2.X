@@ -66,6 +66,8 @@
         <skipTests>true</skipTests>
         <!-- PostgreSQL数据库包版本  -->
         <postgresql.version>42.7.3</postgresql.version>
+        <!-- pinyin4j包版本  -->
+        <pinyin4j.version>2.5.1</pinyin4j.version>
     </properties>
 
     <profiles>
@@ -393,6 +395,12 @@
                 <version>${warm-flow.version}</version>
             </dependency>
 
+            <!--拼音五笔编码-->
+            <dependency>
+                <groupId>com.belerweb</groupId>
+                <artifactId>pinyin4j</artifactId>
+                <version>${pinyin4j.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

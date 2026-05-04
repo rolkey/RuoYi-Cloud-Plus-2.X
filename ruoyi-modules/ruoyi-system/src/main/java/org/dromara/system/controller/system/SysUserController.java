@@ -144,6 +144,7 @@ public class SysUserController extends BaseController {
                 userInfoVo.setPosts(postService.selectPostList(postBo));
                 userInfoVo.setPostIds(postService.selectPostListByUserId(userId));
             }
+            userInfoVo.setDeptIds(userService.selectUserDeptIds(userId));
         }
         SysRoleBo roleBo = new SysRoleBo();
         roleBo.setStatus(SystemConstants.NORMAL);
@@ -305,6 +306,32 @@ public class SysUserController extends BaseController {
     @GetMapping("/list/dept/{deptId}")
     public R<List<SysUserVo>> listByDept(@PathVariable @NotNull Long deptId) {
         return R.ok(userService.selectUserListByDept(deptId));
+    }
+
+    /**
+     * 获取用户关联科室ID列表（跨科室权限）
+     */
+    @SaCheckPermission("system:user:query")
+    @GetMapping("/{userId}/depts")
+    public R<List<Long>> getUserDepts(@PathVariable Long userId) {
+        userService.checkUserDataScope(userId);
+        return R.ok(userService.selectUserDeptIds(userId));
+    }
+
+    /**
+     * 更新用户关联科室（跨科室权限）
+     */
+    @SaCheckPermission("system:user:edit")
+    @Log(title = "用户管理", businessType = BusinessType.UPDATE)
+    @RepeatSubmit()
+    @PutMapping("/{userId}/depts")
+    public R<Void> updateUserDepts(@PathVariable Long userId, @RequestBody Long[] deptIds) {
+        userService.checkUserAllowed(userId);
+        userService.checkUserDataScope(userId);
+        SysUserBo user = new SysUserBo(userId);
+        user.setDeptIds(deptIds);
+        userService.updateUser(user);
+        return R.ok();
     }
 
 }

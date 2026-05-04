@@ -42,4 +42,9 @@ public class SysUserInfoVo implements Serializable {
      */
     private List<SysPostVo> posts;
 
+    /**
+     * 关联部门ID列表（跨科室权限）
+     */
+    private List<Long> deptIds;
+
 }

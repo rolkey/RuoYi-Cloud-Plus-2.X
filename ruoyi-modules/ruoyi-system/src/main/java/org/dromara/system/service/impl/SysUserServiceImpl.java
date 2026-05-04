@@ -20,6 +20,7 @@ import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
 import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.system.domain.SysUser;
+import org.dromara.system.domain.SysUserDept;
 import org.dromara.system.domain.SysUserPost;
 import org.dromara.system.domain.SysUserRole;
 import org.dromara.system.domain.bo.SysUserBo;
@@ -55,6 +56,7 @@ public class SysUserServiceImpl implements ISysUserService {
     private final SysPostMapper postMapper;
     private final SysUserRoleMapper userRoleMapper;
     private final SysUserPostMapper userPostMapper;
+    private final SysUserDeptMapper userDeptMapper;
 
     @Override
     public TableDataInfo<SysUserVo> selectPageUserList(SysUserBo user, PageQuery pageQuery) {
@@ -317,6 +319,8 @@ public class SysUserServiceImpl implements ISysUserService {
         insertUserPost(user, false);
         // 新增用户与角色管理
         insertUserRole(user, false);
+        // 新增用户与部门关联（跨科室权限）
+        insertUserDept(user, false);
         return rows;
     }
 
@@ -349,6 +353,8 @@ public class SysUserServiceImpl implements ISysUserService {
         insertUserRole(user, true);
         // 新增用户与岗位管理
         insertUserPost(user, true);
+        // 新增用户与部门关联（跨科室权限）
+        insertUserDept(user, true);
         SysUser sysUser = MapstructUtils.convert(user, SysUser.class);
         // 防止错误更新后导致的数据误删除
         int flag = baseMapper.updateById(sysUser);
@@ -478,6 +484,44 @@ public class SysUserServiceImpl implements ISysUserService {
     }
 
     /**
+     * 新增用户部门关联信息（跨科室权限）
+     *
+     * @param user  用户对象
+     * @param clear 清除已存在的关联数据
+     */
+    private void insertUserDept(SysUserBo user, boolean clear) {
+        Long[] deptIdArr = user.getDeptIds();
+        if (ArrayUtil.isEmpty(deptIdArr)) {
+            return;
+        }
+        List<Long> deptIds = Arrays.asList(deptIdArr);
+
+        // 是否清除旧的用户部门关联
+        if (clear) {
+            userDeptMapper.delete(new LambdaQueryWrapper<SysUserDept>()
+                .eq(SysUserDept::getUserId, user.getUserId()));
+        }
+
+        // 构建用户部门关联列表并批量插入
+        List<SysUserDept> list = StreamUtils.toList(deptIds,
+            deptId -> {
+                SysUserDept ud = new SysUserDept();
+                ud.setUserId(user.getUserId());
+                ud.setDeptId(deptId);
+                return ud;
+            });
+        userDeptMapper.insertBatch(list);
+    }
+
+    @Override
+    public List<Long> selectUserDeptIds(Long userId) {
+        List<SysUserDept> list = userDeptMapper.selectList(
+            new LambdaQueryWrapper<SysUserDept>()
+                .eq(SysUserDept::getUserId, userId));
+        return StreamUtils.toList(list, SysUserDept::getDeptId);
+    }
+
+    /**
      * 新增用户角色信息
      *
      * @param userId  用户ID
@@ -535,6 +579,8 @@ public class SysUserServiceImpl implements ISysUserService {
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
         // 删除用户与岗位表
         userPostMapper.delete(new LambdaQueryWrapper<SysUserPost>().eq(SysUserPost::getUserId, userId));
+        // 删除用户与部门关联
+        userDeptMapper.delete(new LambdaQueryWrapper<SysUserDept>().eq(SysUserDept::getUserId, userId));
         // 防止更新失败导致的数据删除
         int flag = baseMapper.deleteById(userId);
         if (flag < 1) {
@@ -561,6 +607,8 @@ public class SysUserServiceImpl implements ISysUserService {
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().in(SysUserRole::getUserId, ids));
         // 删除用户与岗位表
         userPostMapper.delete(new LambdaQueryWrapper<SysUserPost>().in(SysUserPost::getUserId, ids));
+        // 删除用户与部门关联
+        userDeptMapper.delete(new LambdaQueryWrapper<SysUserDept>().in(SysUserDept::getUserId, ids));
         // 防止更新失败导致的数据删除
         int flag = baseMapper.deleteByIds(ids);
         if (flag < 1) {

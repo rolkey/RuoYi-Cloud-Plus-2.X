@@ -22,11 +22,13 @@ import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.system.domain.SysDept;
 import org.dromara.system.domain.SysRole;
 import org.dromara.system.domain.SysUser;
+import org.dromara.system.domain.SysUserDept;
 import org.dromara.system.domain.bo.SysDeptBo;
 import org.dromara.system.domain.vo.SysDeptTreeVo;
 import org.dromara.system.domain.vo.SysDeptVo;
 import org.dromara.system.mapper.SysDeptMapper;
 import org.dromara.system.mapper.SysRoleMapper;
+import org.dromara.system.mapper.SysUserDeptMapper;
 import org.dromara.system.mapper.SysUserMapper;
 import org.dromara.system.service.ISysDeptService;
 import org.springframework.cache.annotation.CacheEvict;
@@ -53,6 +55,7 @@ public class SysDeptServiceImpl implements ISysDeptService {
     private final SysDeptMapper baseMapper;
     private final SysRoleMapper roleMapper;
     private final SysUserMapper userMapper;
+    private final SysUserDeptMapper userDeptMapper;
 
     /**
      * 分页查询部门管理数据
@@ -145,9 +148,6 @@ public class SysDeptServiceImpl implements ISysDeptService {
                 // Set disabled status based on department status
                 deptTree.setDisabled(SystemConstants.DISABLE.equals(node.getStatus()));
                 deptTree.setStandDeptId(node.getStandDeptId());
-                if (node.getStandDeptId() != null) {
-                    log.info("{}\n{}", node, deptTree);
-                }
                 return deptTree;
             }
         );
@@ -261,8 +261,13 @@ public class SysDeptServiceImpl implements ISysDeptService {
      */
     @Override
     public boolean checkDeptExistUser(Long deptId) {
-        return userMapper.exists(new LambdaQueryWrapper<SysUser>()
+        boolean existInUser = userMapper.exists(new LambdaQueryWrapper<SysUser>()
             .eq(SysUser::getDeptId, deptId));
+        if (existInUser) {
+            return true;
+        }
+        return userDeptMapper.exists(new LambdaQueryWrapper<SysUserDept>()
+            .eq(SysUserDept::getDeptId, deptId));
     }
 
     /**

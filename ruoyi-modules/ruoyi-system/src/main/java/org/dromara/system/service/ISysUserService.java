@@ -274,4 +274,12 @@ public interface ISysUserService {
      */
     List<Long> selectUserIdsByRoleIds(List<Long> roleIds);
 
+    /**
+     * 查询用户关联的科室ID列表（跨科室权限）
+     *
+     * @param userId 用户ID
+     * @return 科室ID列表
+     */
+    List<Long> selectUserDeptIds(Long userId);
+
 }

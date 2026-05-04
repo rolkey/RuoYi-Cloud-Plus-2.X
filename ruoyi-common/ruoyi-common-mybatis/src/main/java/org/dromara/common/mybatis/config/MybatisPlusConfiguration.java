@@ -70,9 +70,9 @@ public class MybatisPlusConfiguration {
     /**
      * 拼音五笔码拦截器
      */
-    public PinYinInterceptor pinYinInterceptor() {
-        return new PinYinInterceptor();
-    }
+//    public PinYinInterceptor pinYinInterceptor() {
+//        return new PinYinInterceptor();
+//    }
 
     /**
      * 数据权限切面处理器
