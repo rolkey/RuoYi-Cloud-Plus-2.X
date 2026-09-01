@@ -1,50 +1,53 @@
 package org.dromara.common.websocket.listener;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.websocket.holder.WebSocketSessionHolder;
+import org.dromara.common.websocket.service.WebSocketSubscribeService;
 import org.dromara.common.websocket.utils.WebSocketUtils;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.core.Ordered;
+import org.dromara.websocket.api.dto.WebSocketMessageDto;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+
+import java.util.Set;
 
 /**
- * WebSocket 主题订阅监听器
+ * WebSocket 消息消费者（RabbitMQ）
  *
- * @author zendwang
+ * @author ruoyi
  */
 @Slf4j
-public class WebSocketTopicListener implements ApplicationRunner, Ordered {
+public class WebSocketTopicListener {
 
-    /**
-     * 在Spring Boot应用程序启动时初始化WebSocket主题订阅监听器
-     *
-     * @param args 应用程序参数
-     * @throws Exception 初始化过程中可能抛出的异常
-     */
-    @Override
-    public void run(ApplicationArguments args) throws Exception {
-        // 订阅WebSocket消息
-        WebSocketUtils.subscribeMessage((message) -> {
-            log.info("WebSocket主题订阅收到消息session keys={} message={}", message.getSessionKeys(), message.getMessage());
-            // 如果key不为空就按照key发消息 如果为空就群发
-            if (CollUtil.isNotEmpty(message.getSessionKeys())) {
-                message.getSessionKeys().forEach(key -> {
-                    if (WebSocketSessionHolder.existSession(key)) {
-                        WebSocketUtils.sendMessage(key, message.getMessage());
-                    }
-                });
-            } else {
-                WebSocketSessionHolder.getSessionsAll().forEach(key -> {
-                    WebSocketUtils.sendMessage(key, message.getMessage());
-                });
-            }
-        });
-        log.info("初始化WebSocket主题订阅监听器成功");
+    private final WebSocketSubscribeService subscribeService;
+
+    public WebSocketTopicListener(WebSocketSubscribeService subscribeService) {
+        this.subscribeService = subscribeService;
     }
 
-    @Override
-    public int getOrder() {
-        return -1;
+    /**
+     * 消费 RabbitMQ 消息并路由推送
+     * <p>
+     * 路由优先级：定向 sessionKeys > 订阅 type（前缀匹配）> 广播
+     *
+     * @param dto 消息
+     */
+    @RabbitListener(queues = "#{websocketQueue.name}")
+    public void onMessage(WebSocketMessageDto dto) {
+        if (dto == null || dto.getMessage() == null) {
+            return;
+        }
+        if (CollUtil.isNotEmpty(dto.getSessionKeys())) {
+            for (Long sessionKey : dto.getSessionKeys()) {
+                WebSocketUtils.sendMessage(sessionKey, dto.getMessage());
+            }
+        } else if (StrUtil.isNotBlank(dto.getType())) {
+            Set<Long> userIds = subscribeService.getSubscribedUsers(dto.getType());
+            for (Long userId : userIds) {
+                WebSocketUtils.sendMessage(userId, dto.getMessage());
+            }
+        } else {
+            WebSocketSessionHolder.getSessionsAll().forEach(key -> WebSocketUtils.sendMessage(key, dto.getMessage()));
+        }
     }
 }

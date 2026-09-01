@@ -56,13 +56,13 @@ public class WebSocketConfig {
     }
 
     @Bean
-    public WebSocketHandler webSocketHandler() {
-        return new PlusWebSocketHandler();
+    public WebSocketHandler webSocketHandler(WebSocketSubscribeService webSocketSubscribeService) {
+        return new PlusWebSocketHandler(webSocketSubscribeService);
     }
 
     @Bean
-    public WebSocketTopicListener topicListener() {
-        return new WebSocketTopicListener();
+    public WebSocketTopicListener topicListener(WebSocketSubscribeService webSocketSubscribeService) {
+        return new WebSocketTopicListener(webSocketSubscribeService);
     }
 
     @Bean
