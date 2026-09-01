@@ -4,7 +4,6 @@ import cn.hutool.core.util.StrUtil;
 import org.dromara.common.websocket.config.properties.WebSocketProperties;
 import org.dromara.common.websocket.handler.PlusWebSocketHandler;
 import org.dromara.common.websocket.interceptor.PlusWebSocketInterceptor;
-import org.dromara.common.websocket.controller.WebSocketSubscribeController;
 import org.dromara.common.websocket.listener.WebSocketTopicListener;
 import org.dromara.common.websocket.service.WebSocketSubscribeService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -63,15 +62,5 @@ public class WebSocketConfig {
     @Bean
     public WebSocketTopicListener topicListener(WebSocketSubscribeService webSocketSubscribeService) {
         return new WebSocketTopicListener(webSocketSubscribeService);
-    }
-
-    @Bean
-    public WebSocketSubscribeService webSocketSubscribeService() {
-        return new WebSocketSubscribeService();
-    }
-
-    @Bean
-    public WebSocketSubscribeController webSocketSubscribeController(WebSocketSubscribeService webSocketSubscribeService) {
-        return new WebSocketSubscribeController(webSocketSubscribeService);
     }
 }
