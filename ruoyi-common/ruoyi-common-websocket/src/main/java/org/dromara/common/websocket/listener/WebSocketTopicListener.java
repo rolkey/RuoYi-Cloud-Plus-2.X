@@ -10,6 +10,8 @@ import org.dromara.common.websocket.utils.WebSocketUtils;
 import org.dromara.websocket.api.dto.WebSocketMessageDto;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -45,17 +47,26 @@ public class WebSocketTopicListener {
         if (dto == null || dto.getMessage() == null) {
             return;
         }
+        String payload = buildPayload(dto);
         if (CollUtil.isNotEmpty(dto.getSessionKeys())) {
             for (Long sessionKey : dto.getSessionKeys()) {
-                WebSocketUtils.sendMessage(sessionKey, dto.getMessage());
+                WebSocketUtils.sendMessage(sessionKey, payload);
             }
         } else if (StrUtil.isNotBlank(dto.getType())) {
             Set<Long> userIds = subscribeService.getSubscribedUsers(dto.getType());
             for (Long userId : userIds) {
-                WebSocketUtils.sendMessage(userId, dto.getMessage());
+                WebSocketUtils.sendMessage(userId, payload);
             }
         } else {
-            WebSocketSessionHolder.getSessionsAll().forEach(key -> WebSocketUtils.sendMessage(key, dto.getMessage()));
+            WebSocketSessionHolder.getSessionsAll().forEach(key -> WebSocketUtils.sendMessage(key, payload));
         }
+    }
+
+    private String buildPayload(WebSocketMessageDto dto) {
+        Map<String, Object> envelope = new HashMap<>();
+        envelope.put("type", dto.getType());
+        envelope.put("data", dto.getMessage());
+        envelope.put("timestamp", System.currentTimeMillis());
+        return JsonUtils.toJsonString(envelope);
     }
 }
