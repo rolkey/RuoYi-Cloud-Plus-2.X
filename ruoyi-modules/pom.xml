@@ -12,7 +12,7 @@
         <module>ruoyi-system</module>
         <module>ruoyi-gen</module>
         <module>ruoyi-job</module>
-        <!--        <module>ruoyi-resource</module>-->
+        <module>ruoyi-resource</module>
         <!--        <module>ruoyi-workflow</module>-->
     </modules>
 
