@@ -3,17 +3,17 @@
 ### 批量升级
 
 ```
-find /mnt/hgfs/rolkey/work_code8/RuoYi-Cloud-Plus/ruoyi-modules -name "*.jar" -exec cp -f {} ./jar/ \;
+find ~/windows_share/work_code8/RuoYi-Cloud-Plus/ruoyi-modules -name "*.jar" -exec cp -f {} ./jar/ \;
 ```
 
 ### 个别更新
 
 ```bash
-cp /mnt/hgfs/rolkey/work_code8/RuoYi-Cloud-Plus/ruoyi-modules/ruoyi-system/target/ruoyi-system.jar ./jar/
-cp /mnt/hgfs/rolkey/work_code8/RuoYi-Cloud-Plus/ruoyi-modules/ruoyi-gen/target/ruoyi-gen.jar ./jar/
+cp ~/windows_share/work_code8/RuoYi-Cloud-Plus/ruoyi-modules/ruoyi-system/target/ruoyi-system.jar ./jar/
+cp ~/windows_share/work_code8/RuoYi-Cloud-Plus/ruoyi-modules/ruoyi-gen/target/ruoyi-gen.jar ./jar/
 
-cp /mnt/hgfs/rolkey/work_code8/RuoYi-Cloud-Plus/ruoyi-auth/target/ruoyi-auth.jar ./jar/
-cp /mnt/hgfs/rolkey/work_code8/RuoYi-Cloud-Plus/ruoyi-gateway/target/ruoyi-gateway.jar ./jar/
+cp ~/windows_share/work_code8/RuoYi-Cloud-Plus/ruoyi-auth/target/ruoyi-auth.jar ./jar/
+cp ~/windows_share/work_code8/RuoYi-Cloud-Plus/ruoyi-gateway/target/ruoyi-gateway.jar ./jar/
 
 ssh db12_drg "systemctl stop cloud-ruoyi-gen"; scp ruoyi-modules/ruoyi-gen/target/ruoyi-gen.jar db12_drg:/newVol/work_code8/jar/; ssh db12_drg "systemctl start cloud-ruoyi-gen && echo '部署完成。'" 
 ssh db12_drg "systemctl stop cloud-ruoyi-auth"; scp ruoyi-auth/target/ruoyi-auth.jar db12_drg:/newVol/work_code8/jar/; ssh db12_drg "systemctl start cloud-ruoyi-auth && echo '部署完成。'"

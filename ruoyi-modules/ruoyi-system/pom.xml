@@ -122,6 +122,96 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.2.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.yworks</groupId>
+                        <artifactId>yguard</artifactId>
+                        <version>${yguard.version}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <id>obfuscate</id>
+                        <configuration>
+                            <target>
+                                <property name="project.build.prefix" value="${project.build.directory}/${project.build.finalName}"/>
+                                <property name="project.jar" value="${project.build.prefix}.jar"/>
+                                <available file="${project.jar}" property="project.jar.exists"/>
+                                <fail unless="project.jar.exists">${project.jar} does not exist.</fail>
+
+                                <!-- 备份原始jar -->
+                                <property name="project.jar.unobf" value="${project.build.prefix}_unobf.jar"/>
+                                <move file="${project.jar}" tofile="${project.jar.unobf}" verbose="true"/>
+
+                                <!-- 提取应用classes用于混淆 -->
+                                <property name="project.classes.unobf" value="${project.build.prefix}_classes_unobf.jar"/>
+                                <jar destfile="${project.classes.unobf}">
+                                    <mappedresources>
+                                        <zipfileset src="${project.jar.unobf}">
+                                            <include name="BOOT-INF/classes/**"/>
+                                        </zipfileset>
+                                        <mapper type="glob" from="BOOT-INF/classes/*" to="*"/>
+                                    </mappedresources>
+                                </jar>
+
+                                <!-- 混淆应用classes -->
+                                <property name="runtime.classpath" refid="maven.runtime.classpath"/>
+                                <property name="project.classes.obf" value="${project.build.prefix}_classes_obf.jar"/>
+                                <taskdef name="yguard" classname="com.yworks.yguard.YGuardTask" classpathref="maven.plugin.classpath"/>
+                                <yguard>
+                                    <inoutpair in="${project.classes.unobf}" out="${project.classes.obf}"/>
+
+                                    <externalclasses>
+                                        <pathelement path="${runtime.classpath}"/>
+                                    </externalclasses>
+
+                                    <rename mainclass="org.dromara.system.RuoYiSystemApplication" logfile="${project.build.directory}/${project.build.finalName}_renamelog.xml">
+                                        <map>
+                                            <class name="org.dromara.system.service.impl.SysConfigServiceImpl" map="aa1"/>
+                                            <class name="org.dromara.system.service.impl.SysDeptServiceImpl" map="aa2"/>
+                                            <class name="org.dromara.system.service.impl.SysDictDataServiceImpl" map="aa3"/>
+                                            <class name="org.dromara.system.service.impl.SysDictTypeServiceImpl" map="aa4"/>
+                                            <class name="org.dromara.system.service.impl.SysLogininforServiceImpl" map="aa5"/>
+                                            <class name="org.dromara.system.service.impl.SysMenuServiceImpl" map="aa6"/>
+                                            <class name="org.dromara.system.service.impl.SysUserServiceImpl" map="aa7"/>
+                                        </map>
+                                        <keep>
+                                            <class classes="public" methods="public" fields="none">
+                                                <patternset>
+                                                    <include name="org.dromara.system.api.**"/>
+                                                    <include name="org.dromara.system.domain.**"/>
+                                                    <include name="org.dromara.system.mapper.*"/>
+                                                    <include name="org.dromara.system.controller.*"/>
+                                                </patternset>
+                                            </class>
+                                        </keep>
+                                    </rename>
+                                </yguard>
+
+                                <!-- 重新打包jar -->
+                                <zip compress="false" destfile="${project.jar}">
+                                    <zipfileset src="${project.jar.unobf}">
+                                        <include name="**"/>
+                                        <exclude name="BOOT-INF/classes/**"/>
+                                    </zipfileset>
+                                    <zipfileset src="${project.classes.obf}" prefix="BOOT-INF/classes">
+                                        <include name="**"/>
+                                        <exclude name="META-INF/**"/>
+                                    </zipfileset>
+                                </zip>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

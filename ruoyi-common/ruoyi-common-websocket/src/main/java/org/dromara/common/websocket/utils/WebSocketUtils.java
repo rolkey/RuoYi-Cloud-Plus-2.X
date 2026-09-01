@@ -5,7 +5,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.redis.utils.RedisUtils;
-import org.dromara.common.websocket.dto.WebSocketMessageDto;
+import org.dromara.websocket.api.dto.WebSocketMessageDto;
 import org.dromara.common.websocket.holder.WebSocketSessionHolder;
 import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;

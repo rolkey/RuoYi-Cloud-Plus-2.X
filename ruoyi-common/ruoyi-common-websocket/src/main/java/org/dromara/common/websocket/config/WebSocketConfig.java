@@ -4,11 +4,14 @@ import cn.hutool.core.util.StrUtil;
 import org.dromara.common.websocket.config.properties.WebSocketProperties;
 import org.dromara.common.websocket.handler.PlusWebSocketHandler;
 import org.dromara.common.websocket.interceptor.PlusWebSocketInterceptor;
+import org.dromara.common.websocket.controller.WebSocketSubscribeController;
 import org.dromara.common.websocket.listener.WebSocketTopicListener;
+import org.dromara.common.websocket.service.WebSocketSubscribeService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -23,6 +26,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 @ConditionalOnProperty(value = "websocket.enabled", havingValue = "true")
 @EnableConfigurationProperties(WebSocketProperties.class)
 @EnableWebSocket
+@Import(WebSocketRabbitConfig.class)
 public class WebSocketConfig {
 
     @Bean
@@ -59,5 +63,15 @@ public class WebSocketConfig {
     @Bean
     public WebSocketTopicListener topicListener() {
         return new WebSocketTopicListener();
+    }
+
+    @Bean
+    public WebSocketSubscribeService webSocketSubscribeService() {
+        return new WebSocketSubscribeService();
+    }
+
+    @Bean
+    public WebSocketSubscribeController webSocketSubscribeController(WebSocketSubscribeService webSocketSubscribeService) {
+        return new WebSocketSubscribeController(webSocketSubscribeService);
     }
 }

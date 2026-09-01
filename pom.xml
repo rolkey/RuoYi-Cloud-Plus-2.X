@@ -68,6 +68,8 @@
         <postgresql.version>42.7.3</postgresql.version>
         <!-- pinyin4j包版本  -->
         <pinyin4j.version>2.5.1</pinyin4j.version>
+        <!-- yGuard代码混淆 -->
+        <yguard.version>4.1.0</yguard.version>
     </properties>
 
     <profiles>
@@ -400,6 +402,13 @@
                 <groupId>com.belerweb</groupId>
                 <artifactId>pinyin4j</artifactId>
                 <version>${pinyin4j.version}</version>
+            </dependency>
+
+            <!-- yGuard代码混淆 -->
+            <dependency>
+                <groupId>com.yworks</groupId>
+                <artifactId>yguard</artifactId>
+                <version>${yguard.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
