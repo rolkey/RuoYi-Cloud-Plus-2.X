@@ -5,7 +5,6 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -41,14 +40,6 @@ public class WebSocketRabbitConfig {
     @Bean
     public Binding websocketBinding(FanoutExchange websocketExchange, Queue websocketQueue) {
         return BindingBuilder.bind(websocketQueue).to(websocketExchange);
-    }
-
-    /**
-     * JSON 消息转换器（消息格式为 JSON）
-     */
-    @Bean
-    public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
     }
 
 }

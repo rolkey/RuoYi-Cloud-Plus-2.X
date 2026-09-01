@@ -7,6 +7,7 @@ import org.dromara.common.core.domain.R;
 import org.dromara.common.core.service.DictService;
 import org.dromara.common.idempotent.annotation.RepeatSubmit;
 import org.dromara.common.web.core.BaseController;
+import org.dromara.common.json.utils.JsonUtils;
 import org.dromara.common.log.annotation.Log;
 import org.dromara.common.log.enums.BusinessType;
 import org.dromara.common.mybatis.core.page.PageQuery;
@@ -15,6 +16,11 @@ import org.dromara.resource.api.RemoteMessageService;
 import org.dromara.system.domain.bo.SysNoticeBo;
 import org.dromara.system.domain.vo.SysNoticeVo;
 import org.dromara.system.service.ISysNoticeService;
+import org.dromara.websocket.api.constant.WebSocketConstants;
+import org.dromara.websocket.api.constant.WebSocketTopic;
+import org.dromara.websocket.api.dto.WebSocketMessageDto;
+import org.dromara.websocket.api.utils.WebSocketTopicUtils;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +37,7 @@ public class SysNoticeController extends BaseController {
 
     private final ISysNoticeService noticeService;
     private final DictService dictService;
+    private final RabbitTemplate rabbitTemplate;
 
     @DubboReference
     private RemoteMessageService remoteMessageService;
@@ -68,7 +75,15 @@ public class SysNoticeController extends BaseController {
             return R.fail();
         }
         String type = dictService.getDictLabel("sys_notice_type", notice.getNoticeType());
-        remoteMessageService.publishAll("[" + type + "] " + notice.getNoticeTitle());
+        String message = "[" + type + "] " + notice.getNoticeTitle();
+        remoteMessageService.publishAll(message);
+
+        // 通过 RabbitMQ 发布实时消息（WebSocket 通道，订阅 system/sysNotice 的客户端可接收）
+        WebSocketMessageDto wsMessage = new WebSocketMessageDto();
+        wsMessage.setType(WebSocketTopicUtils.build(WebSocketTopic.SYSTEM, "sysNotice"));
+        wsMessage.setMessage(message);
+        wsMessage.setSource("ruoyi-system");
+        rabbitTemplate.convertAndSend(WebSocketConstants.WEBSOCKET_EXCHANGE, "", JsonUtils.toJsonString(wsMessage));
         return R.ok();
     }
 
