@@ -1,6 +1,7 @@
 package org.dromara.common.websocket.listener;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.json.utils.JsonUtils;
@@ -47,17 +48,21 @@ public class WebSocketTopicListener {
         if (dto == null || dto.getMessage() == null) {
             return;
         }
+        log.info("[websocket] 收到推送消息 type={}, sessionKeys={}, message={}", dto.getType(), dto.getSessionKeys(), dto.getMessage());
         String payload = buildPayload(dto);
         if (CollUtil.isNotEmpty(dto.getSessionKeys())) {
-            for (Long sessionKey : dto.getSessionKeys()) {
-                WebSocketUtils.sendMessage(sessionKey, payload);
+            log.info("[websocket] 定向推送 sessionKeys={}", dto.getSessionKeys());
+            for (Object sessionKey : dto.getSessionKeys()) {
+                WebSocketUtils.sendMessage(Convert.toLong(sessionKey), payload);
             }
         } else if (StrUtil.isNotBlank(dto.getType())) {
             Set<Long> userIds = subscribeService.getSubscribedUsers(dto.getType());
+            log.info("[websocket] 订阅路由 type={} 命中 userIds={}", dto.getType(), userIds);
             for (Long userId : userIds) {
                 WebSocketUtils.sendMessage(userId, payload);
             }
         } else {
+            log.info("[websocket] 广播推送");
             WebSocketSessionHolder.getSessionsAll().forEach(key -> WebSocketUtils.sendMessage(key, payload));
         }
     }

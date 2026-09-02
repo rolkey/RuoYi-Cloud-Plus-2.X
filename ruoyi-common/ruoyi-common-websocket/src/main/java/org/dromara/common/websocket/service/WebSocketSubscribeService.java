@@ -1,5 +1,6 @@
 package org.dromara.common.websocket.service;
 
+import cn.hutool.core.convert.Convert;
 import org.dromara.common.redis.utils.RedisUtils;
 import org.dromara.websocket.api.utils.WebSocketTopicUtils;
 import org.redisson.api.RSet;
@@ -21,9 +22,9 @@ import java.util.Set;
  */
 public class WebSocketSubscribeService {
 
-    private static final String SUB_PREFIX = "ws:sub:";
+    private static final String SUB_PREFIX = "global:ws:sub:";
 
-    private static final String USER_SUB_PREFIX = "ws:userSub:";
+    private static final String USER_SUB_PREFIX = "global:ws:userSub:";
 
     /**
      * 订阅主题
@@ -90,7 +91,9 @@ public class WebSocketSubscribeService {
         Set<Long> users = new HashSet<>();
         for (String prefix : WebSocketTopicUtils.prefixes(topic)) {
             RSet<Long> subSet = RedisUtils.getClient().getSet(SUB_PREFIX + prefix);
-            users.addAll(subSet.readAll());
+            for (Object userId : subSet.readAll()) {
+                users.add(Convert.toLong(userId));
+            }
         }
         return users;
     }

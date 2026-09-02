@@ -2,10 +2,12 @@ package org.dromara.common.websocket.config;
 
 import cn.hutool.core.util.StrUtil;
 import org.dromara.common.websocket.config.properties.WebSocketProperties;
+import org.dromara.common.websocket.controller.WebSocketMessageController;
 import org.dromara.common.websocket.handler.PlusWebSocketHandler;
 import org.dromara.common.websocket.interceptor.PlusWebSocketInterceptor;
 import org.dromara.common.websocket.listener.WebSocketTopicListener;
 import org.dromara.common.websocket.service.WebSocketSubscribeService;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -62,5 +64,10 @@ public class WebSocketConfig {
     @Bean
     public WebSocketTopicListener topicListener(WebSocketSubscribeService webSocketSubscribeService) {
         return new WebSocketTopicListener(webSocketSubscribeService);
+    }
+
+    @Bean
+    public WebSocketMessageController webSocketMessageController(RabbitTemplate rabbitTemplate) {
+        return new WebSocketMessageController(rabbitTemplate);
     }
 }
