@@ -5,7 +5,7 @@
 /build/
 !gradle/wrapper/gradle-wrapper.jar
 
-target/
+**/target/
 !.mvn/wrapper/maven-wrapper.jar
 
 ######################################################################
@@ -21,6 +21,7 @@ target/
 
 ### IntelliJ IDEA ###
 .idea
+.run/*
 *.iws
 *.iml
 *.ipr
