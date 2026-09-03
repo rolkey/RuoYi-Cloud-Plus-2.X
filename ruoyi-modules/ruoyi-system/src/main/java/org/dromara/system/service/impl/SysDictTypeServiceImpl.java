@@ -72,8 +72,9 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService {
     private LambdaQueryWrapper<SysDictType> buildQueryWrapper(SysDictTypeBo bo) {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<SysDictType> lqw = Wrappers.lambdaQuery();
-        lqw.like(StringUtils.isNotBlank(bo.getDictName()), SysDictType::getDictName, bo.getDictName());
-        lqw.like(StringUtils.isNotBlank(bo.getDictType()), SysDictType::getDictType, bo.getDictType());
+        lqw.like(StringUtils.isNotBlank(bo.getDictName()), SysDictType::getDictName, bo.getDictName())
+            .or()  // 关键：这里将后面的条件变为 OR
+            .like(StringUtils.isNotBlank(bo.getDictType()), SysDictType::getDictType, bo.getDictType());
         lqw.between(params.get("beginTime") != null && params.get("endTime") != null,
             SysDictType::getCreateTime, params.get("beginTime"), params.get("endTime"));
         lqw.orderByAsc(SysDictType::getDictId);
