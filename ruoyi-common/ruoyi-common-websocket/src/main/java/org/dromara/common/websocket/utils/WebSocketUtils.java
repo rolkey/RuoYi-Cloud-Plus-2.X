@@ -27,8 +27,9 @@ public class WebSocketUtils {
      * @param message    要发送的消息内容
      */
     public static void sendMessage(Long sessionKey, String message) {
-        WebSocketSession session = WebSocketSessionHolder.getSessions(sessionKey);
-        sendMessage(session, message);
+        for (WebSocketSession session : WebSocketSessionHolder.getSessions(sessionKey)) {
+            sendMessage(session, message);
+        }
     }
 
     /**

@@ -66,8 +66,11 @@ public class PlusWebSocketHandler extends AbstractWebSocketHandler {
             log.info("[disconnect] invalid token received. sessionId: {}", session.getId());
             return;
         }
-        WebSocketSessionHolder.removeSession(loginUser.getUserId());
-        subscribeService.cleanup(loginUser.getUserId());
+        WebSocketSessionHolder.removeSession(loginUser.getUserId(), session.getId());
+        // 仅当该用户没有其他活跃会话时才清理订阅，避免多会话互相影响
+        if (!WebSocketSessionHolder.existSession(loginUser.getUserId())) {
+            subscribeService.cleanup(loginUser.getUserId());
+        }
         log.info("[disconnect] sessionId: {},userId:{},userType:{}", session.getId(), loginUser.getUserId(), loginUser.getUserType());
     }
 
